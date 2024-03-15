@@ -46,7 +46,7 @@ class ConnectStatus: Reactor.Component {
             return translate('connecting_status');
         }
         if (!handler.using_public_server()) return translate('Ready');
-        return <span>{translate("Ready")}, <span .link #setup-server>{translate("setup_server_tip")}</span></span>;
+        return <span>{translate("Ready")}</span>;
     }
 
     event click $(#start-service) () {
@@ -210,13 +210,12 @@ class Enhancements: Reactor.Component {
 
     function render() {
         var has_hwcodec = handler.has_hwcodec();
-        var has_gpucodec = handler.has_gpucodec();
         var support_remove_wallpaper = handler.support_remove_wallpaper();
         var me = this;
         self.timer(1ms, function() { me.toggleMenuState() });
         return <li>{translate('Enhancements')}
             <menu #enhancements-menu>
-                {(has_hwcodec || has_gpucodec) ? <li #enable-hwcodec><span>{svg_checkmark}</span>{translate("Enable hardware codec")}</li> : ""}
+                {has_hwcodec ? <li #enable-hwcodec><span>{svg_checkmark}</span>{translate("Hardware Codec")} (beta)</li> : ""}
                 <li #enable-abr><span>{svg_checkmark}</span>{translate("Adaptive bitrate")} (beta)</li>
                 <li #screen-recording>{translate("Recording")}</li>
                 {support_remove_wallpaper ? <li #allow-remove-wallpaper><span>{svg_checkmark}</span>{translate("Remove wallpaper during incoming sessions")}</li> : ""}
@@ -318,7 +317,7 @@ class MyIdMenu: Reactor.Component {
                 <li #socks5-server>{translate('Socks5 Proxy')}</li>
                 <div .separator />
                 <li #stop-service class={service_stopped ? "line-through" : "selected"}><span>{svg_checkmark}</span>{translate("Enable service")}</li>
-                {is_win && handler.is_installed() ? <ShareRdp /> : ""}
+                {handler.is_rdp_service_open() ? <ShareRdp /> : ""}
                 <DirectServer />
                 {false && handler.using_public_server() && <li #allow-always-relay><span>{svg_checkmark}</span>{translate('Always connect via relay')}</li>}
                 {handler.is_ok_change_id() ? <div .separator /> : ""}
@@ -375,8 +374,8 @@ class MyIdMenu: Reactor.Component {
             <div>Version: " + handler.get_version() + " \
             <div>Fingerprint: " + handler.get_fingerprint() + " \
             <div .link .custom-event url='https://rustdesk.com/privacy.html'>" + translate("Privacy Statement") + "</div> \
-            <div .link .custom-event url='https://rustdesk.com'>" + translate("Website") + "</div> \
-	    <div style='background: #2c8cff; color: white; padding: 1em; margin-top: 1em;'>Copyright &copy; " + new Date().getFullYear() + " Purslane Ltd.\
+            <div .link .custom-event url='https://denison.edu'>" + translate("Website") + "</div> \
+	    <div style='background: #2c8cff; color: white; padding: 1em; margin-top: 1em;'> 2024 Denison University and Baran Bayden\
             <br />" + handler.get_license() + " \
             <p style='font-weight: bold'>" + translate("Slogan_tip") + "</p>\
             </div>\
@@ -556,6 +555,7 @@ class App: Reactor.Component
             <div .app>
                     <div .left-pane>
                     <div>
+                        <img src="data:image/jpeg;base64,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"/>
                         <div .title>{translate('Your Desktop')}</div>
                         <div .lighter-text>{translate('desk_tip')}</div>
                         <div .your-desktop>
@@ -577,7 +577,7 @@ class App: Reactor.Component
                 <div .right-pane>
                     <div .right-content>
                         <div .card-connect>
-                            <div .title>{translate('Control Remote Desktop')}</div>
+                            <div .title>{translate('Control Remote Desktop (For technician)')}</div>
                             <ID @{this.remote_id} />
                             <div .right-buttons>
                                 <button .button .outline #file-transfer>{translate('Transfer file')}</button>
@@ -912,8 +912,6 @@ class PasswordArea: Reactor.Component {
             { !show_password ? '' : <div .separator /> }
             { !show_password ? '' : <li #set-password  disabled={ method == 'use-temporary-password' ? "true" : "false" }>{translate('Set permanent password')}</li> }
             { !show_password ? '' : <TemporaryPasswordLengthMenu /> }
-            <div .separator />
-            <li #tfa><span>{svg_checkmark}</span>{translate('enable-2fa-title')}</li>
         </menu></popup>;
     }
 
@@ -929,14 +927,11 @@ class PasswordArea: Reactor.Component {
         var pwd_id = handler.get_option('verification-method');
         if (pwd_id != 'use-temporary-password' && pwd_id != 'use-permanent-password')
             pwd_id = 'use-both-passwords';
-        var has_valid_2fa = handler.has_valid_2fa();
         for (var el in this.$$(menu#edit-password-context>li)) {
             if (el.id.indexOf("approve-mode-") == 0)
                 el.attributes.toggleClass("selected", el.id == mode_id);
             if (el.id.indexOf("use-") == 0)
                 el.attributes.toggleClass("selected", el.id == pwd_id);
-            if (el.id == "tfa")
-                el.attributes.toggleClass("selected", has_valid_2fa);
         }
     }
 
@@ -987,32 +982,6 @@ class PasswordArea: Reactor.Component {
             handler.set_option('approve-mode', approve_mode);
             this.toggleMenuState();
             passwordArea.update();
-        }
-    }
-
-    event click $(li#tfa) {
-        var me = this;
-        var has_valid_2fa = handler.has_valid_2fa();
-        if (has_valid_2fa) {
-            handler.set_option('2fa', '');
-            me.update();
-        } else {
-            var new2fa = handler.generate2fa();
-            var src = handler.generate_2fa_img_src(new2fa);
-            msgbox("custom-2fa-setting", translate('enable-2fa-title'),
-                <div .form>
-                    <div>{translate('enable-2fa-desc')}</div>
-                    <img src={src} />
-                    <div .code><input name='code' type='text' .outline-focus /></div>
-                </div>
-                , "", function(res=null) {
-                if (!res) return;
-                if (!res.code) return;
-                if (!handler.verify2fa(res.code)) {
-                    return translate('wrong-2fa-code');
-                }
-                me.update();
-            }, 400);
         }
     }
 }
@@ -1254,7 +1223,7 @@ function login() {
             if (data.type == 'email_check') {
                 abLoading = false;
                 show_progress(-1);
-                on_2fa_check(data);
+                on_email_check(data);
                 return;
             }
             handler.set_local_option("access_token", data.access_token);
@@ -1272,15 +1241,12 @@ function login() {
       });
 }
 
-function on_2fa_check(last_msg) {
-    const isEmailCheck = !last_msg.tfa_type || last_msg.tfa_type == 'email_check';
-    const secret = last_msg.secret;
-    const emailHint = last_msg.user.email;
-
-    msgbox("custom-2fa-verification-code", translate('Verification code'), <div .form .set-password> 
-            { isEmailCheck && <div><span>{translate('Email')}:</span><span>{emailHint}</span></div> }
-            <div><span>{translate(isEmailCheck ? 'Verification code' : '2FA code')}:</span><input|text name="verification_code" .outline-focus /></div> 
-            { isEmailCheck && <div style="font-size:0.9em; margin-bottom:1em;">{translate('verification_tip')}</div> }
+function on_email_check(last_msg) {
+    var emailHint = last_msg.user.email;
+    msgbox("custom-email-verification-code", translate('Verification code'), <div .form .set-password> 
+            <div><span>{translate('Email')}:</span><span>{emailHint}</span></div> 
+            <div><span>{translate('Verification code')}:</span><input|text name="verification_code" .outline-focus /></div> 
+            <div style="font-size:0.9em; margin-bottom:1em;">{translate('verification_tip')}</div>
         </div>, "", 
         function(res=null, show_progress) {
             if (!res) return;
@@ -1292,17 +1258,7 @@ function on_2fa_check(last_msg) {
             }
             abLoading = true;
             var url = handler.get_api_server();
-            const loginData = {
-                username: last_msg.user.name,
-                id: my_id,
-                uuid: handler.get_uuid(),
-                type: 'email_code',
-                verificationCode: code,
-                tfaCode: isEmailCheck ? '' : code,
-                secret: secret,
-                deviceInfo: getDeviceInfo()
-            };
-            httpRequest(url + "/api/login", #post, loginData, 
+            httpRequest(url + "/api/login", #post, {username: last_msg.user.name, id: my_id, uuid: handler.get_uuid(), type: 'email_code', autoLogin: true, verificationCode: code, deviceInfo: getDeviceInfo()}, 
                 function(data) {
                     if (data.error) {
                         abLoading = false;
